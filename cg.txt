@@ -1,427 +1,231 @@
+//3rd
+#include <string.h>
+	#include <stdio.h>
+	#include <stdlib.h>
 
-//Bresenhams line
-#include<iostream>
-using namespace std;
-#include<glut.h>
-#include<math.h>
-int xx, yy, xend, yend;
-void myinit()
-{
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0, 500, 0, 500);
-	glMatrixMode(GL_MODELVIEW);
-}
-void setPixel(int x, int y)
-{
-
-	glBegin(GL_POINTS);
-	glVertex2f(x, y);
-	glEnd();
-	glFlush();
-
-}
-void Bresenhamline()
-{
-	int dx = abs(xend - xx), dy = abs(yend - yy);
-	int p, x, y;
-	int twody = 2 * dy, twodyMinustwodx = 2 * (dy - dx);
-	int twodx = 2 * dx, twodxMinustwody = 2 * (dx - dy);
-	x = xx;
-	y = yy;
-	glColor3f(1, 0, 0); // Set color to red.
-	glPointSize(3); //Set point size to 3
-	if (dx > dy)
-	{
-		//For slope m&lt;1
-		p = 2 * dy - dx;
-		setPixel(x, y);
-		while (x < xend)
-		{
-			x = x + 1;
-			if (p < 0)
-
-				p = p + twody;
-			else
-			{
-				y = y + 1;
-
-				p = p + twodyMinustwodx;
+    char STACK[20]="\0";
+    int TOP=-1,flag=0;
+    int B_ptr = 0;
+    char BUFFER[20],G_prod[20];
+    char table [3][3][10] = {
+                 "NT", "a","b",
+                 "A", "aBa","Error",
+                 "B", "Îµ","bB",
+                 };
+    char pop()
+    {
+    	char ch;
+    	ch = STACK[TOP--];
+    	return ch;
+    }
+    
+    void push(char ch)
+    {
+    	STACK[++TOP] = ch;
+    }
+    
+    void stack_content()
+    {
+        if (TOP != -1)
+        {
+                int i = 0;
+               printf("\nstack content: ");
+                while(i <= TOP)
+                {
+                    printf("%c",STACK[i++]);
+                }
+                printf("\n");
+        }
+        return;
+    }
+    
+    int isterm(char c)
+    {
+    	if (c >= 'a' && c <= 'z')
+    		return 1;
+    	else
+    		return 0;
+    }
+    
+    int Parser_table(char stack_top,char buf_value,int flag)
+    {
+    	int r,c;
+      switch(stack_top)
+    	{
+    		case 'A' : r = 1; break;
+    		case 'B' : if(flag<=5) r = 2; else r = 3; 
+    	}
+    	switch(buf_value)
+    	{
+    		case 'a' : c = 1; break;
+    		case 'b' : c = 2; 
+    	}
+    	 
+     	if (strcmp(table[r][c],"error") == 0)
+    		return 0;
+    	 
+    	if (strcmp(table[r][c],"Îµ") != 0)
+    	{
+    		strcpy(G_prod,table[r][c]);
+    	}
+    	return 1;
+    }
+    
+    int main()
+    {
+            int i,j,stln;
+            printf("LL(1)  PARSER  TABLE \n");
+        	for(i=0;i<3;i++)
+       	    {
+                for(j=0;j<3;j++)
+                	{
+                    	printf("%s\t",table[i][j]);
+                	}
+                	printf("\n");
+        	}
+        	printf("\n");
+          	printf("ENTER THE STRING into the Buffer and also give a ';' as the terminator: ");
+        	scanf("%s",BUFFER);
+        	printf("\n THE STRING in the Buffer is %s",BUFFER);
+    
+        	if(BUFFER[strlen(BUFFER)-1] != ';')
+        	{
+              printf("END OF STRING MARKER SHOULD BE ';'");
+              exit(0);
+        	}
+        	push('$');
+        	push('A');
+        	while(STACK[TOP] != '$') // Stack is not Empty
+    	    {
+    	        flag++;
+        		if (STACK[TOP] == BUFFER[B_ptr]) // X is a
+        		{
+        			printf("\n1.The poped item is - %c,",pop());
+        			B_ptr++;
+					printf("\t buffer cont - %.*s",strlen(BUFFER),BUFFER+B_ptr);
+        		}
+        		else if (isterm(STACK[TOP])) // is X is terminal
+        			{  
+        			    printf("\n2. $ %c",STACK[TOP]);
+        			    printf("\t Error in Parsing \n");
+        			}
+        		else if (!Parser_table(STACK[TOP],BUFFER[B_ptr],flag))
+        			 printf("3. Error Entry in Parse Table ");
+        		else if (Parser_table(STACK[TOP],BUFFER[B_ptr],flag))
+        			{
+        			    if (flag < 6 && strcmp(G_prod,"Îµ") != 0)
+        			    {
+            				printf("\n4.1 flag = %d, prod id- %s*\t",flag,G_prod);
+            				pop();
+            				stln = strlen(G_prod);
+            			    for(i=stln-1;i>=0;i--)
+            					push(G_prod[i]);
+            				stack_content();
+            			}
+        			    else
+        			    {
+            			    stack_content();
+            				printf("\n4.2 flag = %d  *reduce by %s*",flag,"B->Îµ");
+            				pop();
+							printf("\t buffer content is %c",BUFFER[B_ptr]);
+            			}
+        			}
 			}
-
-			setPixel(x, y);
-			cout << x <<"\t"<< y<<endl;
-
-		}
-	}
-	else
-	{
-		//For slope m > 1
-		p = 2 * dx - dy;
-		setPixel(x, y);
-		while (y < yend)
-		{
-			y = y + 1;
-			if (p < 0)
-
-				p = p + twodx;
+        	if (STACK[TOP] == '$' && BUFFER[B_ptr] == ';')
+        	    printf("\n** The string is accepted **");
 			else
-			{
-				x = x + 1;
-				p = p + twodxMinustwody;
-			}
-			setPixel(x, y);
-			cout << x << "\t" << y << endl;
-		}
-	}
+				 printf("\n** The string is not accepted **");				
+    }
 
-}
-void display()
+
+//4th 
+Lex Program
+ %{
+    #include "y.tab.h"
+%}
+%%
+[a-zA-Z][a-zA-Z0-9]* {printf("\nShift "); ECHO; return id;}
+[*+] {printf("\nShift "); ECHO; return yytext[0];}
+[( )] {printf("\nShift "); ECHO; return yytext[0];}
+. ;
+\n return 0;
+%%
+
+Yacc-part
+%{
+#include<stdio.h>
+#include<stdlib.h>
+int yyerror();
+%}
+%token id
+%left '+' '-'
+%left '*' '/'
+%%
+exp: E {printf("\n Accept-Success");};
+E: E'+'T {printf("\nReduce E -> E + T\n");}
+ |T { printf("\nReduce E->T\n");}
+ ;
+T:T'*'F {printf("\nReduce T -> T * F\n");} 
+ |F {printf("\nReduce T -> F\n");}
+ ;
+F:'('E')'{printf("\nReduce F -> ( E )\n");}
+ |id {printf("\nReduce F->id\n");}
+ ;
+%%
+int yyerror()
 {
-	glClearColor(1, 1, 1, 1); //Specifies a background RGB color for a display window.
-	glClear(GL_COLOR_BUFFER_BIT);// Clear display window.
-	Bresenhamline();
-	glFlush(); // Process all OpenGL routines as quickly as possible.
+printf("error");
+exit(0);
 }
 int main()
 {
-	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);// Set display mode.
-	glutInitWindowPosition(100, 100); // Set top-left display-window position.
-	glutInitWindowSize(500, 500); // Set display-window width and height.
-	glutCreateWindow("Bresenham Line Drawing Algorthm ");// Create display window.
-	myinit(); // Execute initialization procedure.
-	cout<<"Enter co - ordinates of first point :";
-	cin>>xx>>yy;
-	cout<<"Enter co - ordinates of second point :";
-	cin>>xend>>yend;
-	glutDisplayFunc(display);//Invokes a function to create a picture within current display window.
-	glutMainLoop(); //Executes the computer-graphics program.
-	return 0;
+printf("Enter an expression:\n");
+yyparse();
+exit(0);
 }
 
 
-//2D gasket
+//5th
 #include<stdio.h>
-#include<gl/glut.h>
-int c;
-float v[4][3] = { {0,0,1},{-1,-0.5,0},{0,1,0},{1,-0.5,0} };
-void myinit()
-{
-	glMatrixMode(GL_PROJECTION_MATRIX);
-	glLoadIdentity();
-	glOrtho(-2, 2, -2, 2, -2, 2);
-	glMatrixMode(GL_MODELVIEW);
-}
-void disp_tri(float a[3], float b[3], float c[3])
-{
-	glBegin(GL_POLYGON);
-	glVertex3fv(a);
-	glVertex3fv(b);
-	glVertex3fv(c);
-	glEnd();
-}
-void div_tri(float* a, float* b, float* c, int n)
-{
-	float v1[3], v2[3], v3[3];
-	int i;
-
-	if (n > 0)
-	{
-		for (i = 0; i < 3; i++)
-		{
-			v1[i] = (a[i] + b[i]) / 2;
-			v2[i] = (a[i] + c[i]) / 2;
-			v3[i] = (b[i] + c[i]) / 2;
-		}
-		div_tri(a, v1, v2, n - 1);
-		div_tri(v1, b, v3, n - 1);
-		div_tri(v2, v3, c, n - 1);
-
-	}
-	else
-		disp_tri(a, b, c);
-}
-
-void display()
-{
-	glClearColor(0, 0, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glColor3f(1, 1, 1);
-	div_tri(v[1], v[2], v[3], c);
-
-	glColor3f(1, 0, 0);
-	div_tri(v[0], v[1], v[2], c);
-
-	glColor3f(0, 1, 0);
-	div_tri(v[0], v[2], v[3], c);
-
-	glColor3f(0, 0, 1);
-	div_tri(v[0], v[1], v[3], c);
-
-	glFlush();
-}
-
-void main()
-{
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-	glutInitWindowSize(600, 600);
-	glutInitWindowPosition(300, 150);
-	printf("Enter the number of subdivisions:\n");
-	scanf_s("%d", &c);
-	glutCreateWindow("3D Recursive Sierpinski Gasket");
-	myinit();
-	glutDisplayFunc(display);
-	glutMainLoop();
-}
-
-
-//traingle rotation
-#include<iostream>
-using namespace std;
-#include<GL/glut.h>
-#include<math.h>
-float p[3][2] = { {20,20},{40,40},{60,20} };
-float xp, yp, theta, rtheta;
-void myinit()
-{
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(-100, 100, -100, 100);
-	glMatrixMode(GL_MODELVIEW);
-}
-void drawtraiangle()
-{
-	glBegin(GL_TRIANGLES);
-	glVertex2fv(p[0]);
-	glVertex2fv(p[1]);
-	glVertex2fv(p[2]);
-	glEnd();
-}
-
-void display()
-{
-	float x, y;
-	glClearColor(1, 1, 1, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(1, 0, 0);
-	drawtraiangle();
-	rtheta = (theta * 3.142) / 180;
-	for (int i = 0; i < 3; i++)
-	{
-		x = p[i][0];
-		y = p[i][1];
-		p[i][0] = xp + (x - xp) * cos(rtheta) - (y - yp) * sin(rtheta);
-		p[i][1] = yp + (x - xp) * sin(rtheta) + (y - yp) * cos(rtheta);
-	}
-	glColor3f(0, 1, 0);
-	drawtraiangle();
-	glFlush();
-}
-void main()
-{
-	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
-	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(500, 500);
-	glutCreateWindow("Traingle rotation");
-	myinit();
-	cout << "enter xp,yp and theta" << endl;
-	cin >> xp >> yp >> theta;
-	glutDisplayFunc(display);
-	glutMainLoop();
-}
-
-//Scan line
-
-#include<stdlib.h>
-#include<stdio.h>
-#include<GL/glut.h>
-float x1, x2, x3, x4, y1, y2, y3, y4;
-void d_menu(int op)
-{
-	if (op == 1)
-		glColor3f(1.0, 0.0, 0.0);
-	else if (op == 2)
-		glColor3f(0.0, 1.0, 0.0);
-	else if (op == 3)
-		glColor3f(0.0, 0.0, 1.0);
-	else if (op == 4)
-		exit(0);
-	glutPostRedisplay();
-}
-void edgedetect(float x1, float y1, float x2, float y2, int* le, int* re)
-{
-	float mx, x, temp;
-	int i;
-	if ((y2 - y1) < 0)
-	{
-		temp = y1; y1 = y2; y2 = temp;
-		temp = x1; x1 = x2; x2 = temp;
-	}
-	if ((y2 - y1) != 0)
-		mx = (x2 - x1) / (y2 - y1);
-	else
-		mx = x2 - x1;
-	x = x1;
-	for (i = y1; i <= y2; i++)
-	{
-		if (x < (float)le[i])
-			le[i] = (int)x;
-		if (x > (float)re[i])
-			re[i] = (int)x;
-		x += mx;
-	}
-}
-void draw_pixel(int x, int y)
-{
-	glBegin(GL_POINTS);
-	glVertex2i(x, y);
-	glEnd();
-	glFlush();
-}
-void scanfill(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
-{
-	int le[500], re[500];
-	int i, y;
-	for (i = 0; i < 500; i++)
-	{
-		le[i] = 500;
-		re[i] = 0;
-	}
-	edgedetect(x1, y1, x2, y2, le, re);
-	edgedetect(x2, y2, x3, y3, le, re);
-	edgedetect(x3, y3, x4, y4, le, re);
-	edgedetect(x4, y4, x1, y1, le, re);
-	for (y = 0; y < 500; y++)
-	{
-		if (le[y] <= re[y])
-			for (i = (int)le[y]; i < (int)re[y]; i++)
-				draw_pixel(i, y);
-	}
-}
-void display()
-{
-	x1 = 200.0; y1 = 200.0; x2 = 100.0; y2 = 300.0;
-	x3 = 200.0; y3 = 400.0; x4 = 300.0; y4 = 300.0;
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glBegin(GL_LINE_LOOP);
-	glVertex2f(x1, y1);
-	glVertex2f(x2, y2);
-	glVertex2f(x3, y3);
-	glVertex2f(x4, y4);
-	glEnd();
-	scanfill(x1, y1, x2, y2, x3, y3, x4, y4);
-	glFlush();
-}
-
-void myinit()
-{
-	glClearColor(1.0, 1.0, 1.0, 1.0);
-	glColor3f(1.0, 0.0, 1.0);
-	glPointSize(1.0);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0.0, 499.0, 0.0, 499.0);
-}
-void main(int argc, char** argv)
-{
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-	glutInitWindowSize(500, 500);
-	glutInitWindowPosition(0, 0);
-	glutCreateWindow("Filling a polygon using scanline algorithm");
-	glutCreateMenu(d_menu);
-	glutAddMenuEntry("Red", 1);
-	glutAddMenuEntry("Green", 2);
-	glutAddMenuEntry("Blue", 3);
-	glutAddMenuEntry("Quit", 4);
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
-	myinit();
-	glutDisplayFunc(display);
-	glutMainLoop();
-}
-
-//cube rotation
-
-#include<stdlib.h>
-#include<stdio.h>
-#include<GL/glut.h>
-#include<math.h>
-float v[8][3] = { {-1,-1,1},{-1,1,1},{1,1,1},{1,-1,1},{-1,-1,-1},{-1,1,-1},{1,1,-1},{1,-1,-1} };
-float p[8][3] = { {0,0,1},{0,1,1},{1,1,1},{1,0,1},{0,0,0},{0,1,0},{1,1,0},{1,0,0} };
-float theta[3] = { 0,0,0 };
-int flag = 2;
-
-void myinit()
-{
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-2, 2, -2, 2, -2, 2);
-    glMatrixMode(GL_MODELVIEW);
-}
-void idlefunc()
-{
-    theta[flag]++;
-    if (theta[flag] > 360)theta[flag] = 0;
-    glutPostRedisplay();
-}
-void mousefunc(int button, int status, int x, int y)
-{
-    if (button == GLUT_LEFT_BUTTON && status == GLUT_DOWN)
-        flag = 2;
-    if (button == GLUT_MIDDLE_BUTTON && status == GLUT_DOWN)
-        flag = 1;
-    if (button == GLUT_RIGHT_BUTTON && status == GLUT_DOWN)
-        flag = 0;
-}
-void drawpoly(int a, int b, int c, int d)
-{
-    glBegin(GL_POLYGON);
-    glColor3fv(p[a]);
-    glVertex3fv(v[a]);
-    glColor3fv(p[b]);
-    glVertex3fv(v[b]);
-    glColor3fv(p[c]);
-    glVertex3fv(v[c]);
-    glColor3fv(p[d]);
-    glVertex3fv(v[d]);
-    glEnd();
-}
-void colorcube()
-{
-    drawpoly(0, 1, 2, 3);
-    drawpoly(0, 1, 5, 4);
-    drawpoly(1, 5, 6, 2);
-    drawpoly(4, 5, 6, 7);
-    drawpoly(3, 2, 6, 7);
-    drawpoly(0, 4, 7, 3);
-}
-void display()
-{
-    glClearColor(1, 1, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColor3f(1, 0, 0);
-    glEnable(GL_DEPTH_TEST);
-    glLoadIdentity();
-    glRotatef(theta[0], 1, 0, 0);//x
-    glRotatef(theta[1], 0, 1, 0);//y
-    glRotatef(theta[2], 0, 0, 1);//z
-    colorcube();
-    glFlush();
-    glutSwapBuffers();
-}
-void main()
-{
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-    glutInitWindowPosition(100, 100);
-    glutInitWindowSize(500, 500);
-    glutCreateWindow("cube rotation");
-    myinit();]
-    glutDisplayFunc(display);
-    glutMouseFunc(mousefunc);
-    glutIdleFunc(idlefunc);
-    glutMainLoop();
-}
-
+	#include<stdlib.h>
+	#include<ctype.h>
+	#include<string.h>
+	
+	char op[2],arg1[5],arg2[5],result[5];
+	void main()
+	{	
+  		FILE *fp1,*fp2;
+		int count = 1;
+  		fp1=fopen("input.txt","r");
+  		fp2=fopen("output.txt","w");
+  
+  		while(!feof(fp1))
+  		{
+    		fscanf(fp1,"%s%s%s%s",result,arg1,op,arg2);
+			if(arg2[0] == '?' && result[0]== 'T')
+    		{
+      			fprintf(fp2,"\nLD R0,%s",arg1);
+      		}   	
+			if(arg1[0] != 'T' && arg2[0] != 'T' && strcmp(op,"+")==0)
+			{
+				fprintf(fp2,"\nLD R1,%s",arg1); 
+      			fprintf(fp2,"\nLD R2,%s",arg2);
+				fprintf(fp2,"\nADD R1,R1,R2");
+      		}
+			if(arg1[0] == 'T' && arg2[0] == 'T' && strcmp(op,"*")==0)
+			{
+				fprintf(fp2,"\nMULT R1,R1,R0");
+      		}
+					
+			if((strcmp(op,"=")==0) && (arg1[0]=='T') && count == 1)
+    		{
+      			//fprintf(fp2,"\nMOV R0,%s",arg1);
+      			//fprintf(fp2,"\nMOV %s,R0",result);
+				fprintf(fp2,"\nST  %s,R0",result);
+				count++;
+    		} 
+	   	}
+    	fclose(fp1);
+    	fclose(fp2);
+  	}
 
